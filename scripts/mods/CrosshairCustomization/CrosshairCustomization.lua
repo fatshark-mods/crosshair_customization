@@ -77,61 +77,81 @@ mod:hook_safe(CrosshairUI, "configure_hit_marker_color_and_size", function (self
 	local damage_amount = hit_marker_data.damage_amount
 	local hit_critical = hit_marker_data.hit_critical
 	local has_armor = hit_marker_data.has_armor
-	local hit_player = hit_marker_data.hit_player
+	local friendly_fire = hit_marker_data.friendly_fire
 	local added_dot = hit_marker_data.added_dot
 	local is_critical = false
 	local is_armored = false
-	local friendly_fire = false
 
 	if damage_amount <= 0 and has_armor and not added_dot then
 		is_armored = true
-	elseif hit_player then
-		friendly_fire = true
 	elseif hit_critical then
 		is_critical = true
 	end
 
+	local hm_rot_texture = hit_marker.style.rotating_texture
+
 	if not is_armored and not friendly_fire and not is_critical then
 		if mod:get(mod.SETTING_NAMES.HIT_MARKERS_COLOR_GROUP) then
-			hit_marker.style.rotating_texture.color[2] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_RED)
-			hit_marker.style.rotating_texture.color[3] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_GREEN)
-			hit_marker.style.rotating_texture.color[4] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_BLUE)
+			hm_rot_texture.color[2] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_RED)
+			hm_rot_texture.color[3] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_GREEN)
+			hm_rot_texture.color[4] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_BLUE)
 		else
 			local color = mod.get_color()
-			hit_marker.style.rotating_texture.color = table.clone(color)
+			hm_rot_texture.color[2] = color[2]
+			hm_rot_texture.color[3] = color[3]
+			hm_rot_texture.color[4] = color[4]
 		end
 
-		hit_marker.style.rotating_texture.color[1] = 0
+		hm_rot_texture.color[1] = 0
 	end
 
 	-- change the headshot hit marker color
-	if is_critical and mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_COLOR_GROUP) then
-		hit_marker.style.rotating_texture.color[2] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_RED)
-		hit_marker.style.rotating_texture.color[3] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_GREEN)
-		hit_marker.style.rotating_texture.color[4] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_BLUE)
-	end
-	if hit_marker_data._mod_is_crit_proc then
-		hit_marker.style.rotating_texture.color[2] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_PROC_RED)
-		hit_marker.style.rotating_texture.color[3] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_PROC_GREEN)
-		hit_marker.style.rotating_texture.color[4] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_PROC_BLUE)
+	if is_armored then
+		if mod:get(mod.SETTING_NAMES.HIT_MARKERS_ARMORED_COLOR_GROUP) then
+			hm_rot_texture.color[2] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_ARMORED_RED)
+			hm_rot_texture.color[3] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_ARMORED_GREEN)
+			hm_rot_texture.color[4] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_ARMORED_BLUE)
+		end
+	elseif friendly_fire then
+		if mod:get(mod.SETTING_NAMES.HIT_MARKERS_FF_COLOR_GROUP) then
+			hm_rot_texture.color[2] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_FF_RED)
+			hm_rot_texture.color[3] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_FF_GREEN)
+			hm_rot_texture.color[4] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_FF_BLUE)
+		end
+	elseif is_critical
+	and hit_marker_data._mod_is_crit_proc
+	and mod:get(mod.SETTING_NAMES.HIT_MARKERS_HS_AND_CRIT_COLOR_GROUP) then
+		hm_rot_texture.color[2] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_HS_AND_CRIT_RED)
+		hm_rot_texture.color[3] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_HS_AND_CRIT_GREEN)
+		hm_rot_texture.color[4] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_HS_AND_CRIT_BLUE)
+	elseif is_critical
+	and mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_COLOR_GROUP) then
+		hm_rot_texture.color[2] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_RED)
+		hm_rot_texture.color[3] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_GREEN)
+		hm_rot_texture.color[4] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_BLUE)
+	elseif hit_marker_data._mod_is_crit_proc
+	and mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_PROC_COLOR_GROUP) then
+		hm_rot_texture.color[2] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_PROC_RED)
+		hm_rot_texture.color[3] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_PROC_GREEN)
+		hm_rot_texture.color[4] = mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_PROC_BLUE)
 	end
 
 	-- change hit marker size
 	local hit_marker_width = mod:get(mod.SETTING_NAMES.HIT_MARKERS_SIZE)
-	hit_marker.style.rotating_texture.size = {
+	hm_rot_texture.size = {
 		hit_marker_width,
 		4
 	}
-	if not hit_marker.style.rotating_texture.original_offset then
-		hit_marker.style.rotating_texture.original_offset = table.clone(hit_marker.style.rotating_texture.offset)
+	if not hm_rot_texture.original_offset then
+		hm_rot_texture.original_offset = table.clone(hm_rot_texture.offset)
 	end
-	hit_marker.style.rotating_texture.offset[1] = hit_marker.style.rotating_texture.original_offset[1]
-	hit_marker.style.rotating_texture.offset[2] = hit_marker.style.rotating_texture.original_offset[2]
-	if hit_marker.style.rotating_texture.offset[1] == -6 then
-		hit_marker.style.rotating_texture.offset[1] = -hit_marker_width + 4
+	hm_rot_texture.offset[1] = hm_rot_texture.original_offset[1]
+	hm_rot_texture.offset[2] = hm_rot_texture.original_offset[2]
+	if hm_rot_texture.offset[1] == -6 then
+		hm_rot_texture.offset[1] = -hit_marker_width + 4
 	end
-	if hit_marker.style.rotating_texture.offset[2] == 6 then
-		hit_marker.style.rotating_texture.offset[2] = hit_marker_width - 4
+	if hm_rot_texture.offset[2] == 6 then
+		hm_rot_texture.offset[2] = hit_marker_width - 4
 	end
 end)
 
@@ -295,17 +315,30 @@ end)
 --- Hook to catch crits.
 mod:hook_safe(DamageUtils, "buff_on_attack", function(unit, hit_unit, attack_type, is_critical) -- luacheck: no unused
 	local hud_extension = ScriptUnit.has_extension(unit, "hud_system")
-	if is_critical and hud_extension and mod:get(mod.SETTING_NAMES.HIT_MARKERS_CRITICAL_COLOR_GROUP) then
+	if is_critical and hud_extension then
 		local hit_marker_data = hud_extension.hit_marker_data
 		hit_marker_data._mod_is_crit_proc = true
 	end
 end)
 
---- Set hit_marker_data crit proc flag back to false.
-mod:hook_safe(CrosshairUI, "update_hit_markers", function(self)
+--- Reset hit_marker_data crit proc flag back to false.
+--- Option to show FF hit markers based on damage dealt.
+mod:hook(CrosshairUI, "update_hit_markers", function(func, self, ...)
 	local player_unit = self.local_player.player_unit
 	local hud_extension = ScriptUnit.extension(player_unit, "hud_system")
 	local hit_marker_data = hud_extension.hit_marker_data
+
+	if hit_marker_data.hit_enemy then
+		local damage_amount = hit_marker_data.damage_amount
+		local friendly_fire = hit_marker_data.friendly_fire
+		if friendly_fire
+		and damage_amount < mod:get(mod.SETTING_NAMES.IGNORE_FF_TRESHOLD) then
+			hit_marker_data.hit_enemy = false
+		end
+	end
+
+	func(self, ...)
+
 	hit_marker_data._mod_is_crit_proc = false
 end)
 
